@@ -12,8 +12,6 @@ pip install -r requirements.txt
 ```bash
 flask run
 ```
-## Deployed System
-You can access the deployed system [here](https://video-caption-4qny.onrender.com/).
 
 ## Build the image
 ```bash
