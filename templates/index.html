@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Caption Generator</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Video Caption Generator</h1>
+
+        <div class="upload-section">
+            <input type="file" id="fileInput" class="file-input" accept="video/*" hidden>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose Video
+            </button>
+        </div>
+
+        <div class="preview-section">
+            <video id="videoPreview" controls></video>
+        </div>
+
+        <div class="loading" style="display: none;">
+            <p>Processing video... This may take a few minutes.</p>
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="captions-section" id="captionsContainer"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const videoPreview = document.getElementById('videoPreview');
+        const captionsContainer = document.getElementById('captionsContainer');
+        const loadingDiv = document.querySelector('.loading');
+        const progressBar = document.querySelector('.progress');
+        const errorDiv = document.getElementById('error');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Show video preview
+                const videoUrl = URL.createObjectURL(file);
+                videoPreview.src = videoUrl;
+                videoPreview.style.display = 'block';
+
+                // Clear previous captions
+                captionsContainer.innerHTML = '';
+                errorDiv.style.display = 'none';
+
+                // Process video
+                processVideo(file);
+            }
+        });
+
+        function processVideo(file) {
+            const formData = new FormData();
+            formData.append('video', file);
+
+            loadingDiv.style.display = 'block';
+            progressBar.parentElement.style.display = 'block';
+            progressBar.style.width = '0%';
+            errorDiv.style.display = 'none';
+
+            fetch('/process_video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("API Response:", data);  // Debugging
+
+                loadingDiv.style.display = 'none';
+                progressBar.parentElement.style.display = 'none';
+
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else {
+                    displayCaptions(data.captions);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingDiv.style.display = 'none';
+                progressBar.parentElement.style.display = 'none';
+                errorDiv.textContent = 'An error occurred while processing the video.';
+                errorDiv.style.display = 'block';
+            });
+        }
+
+        function displayCaptions(captions) {
+            console.log("Displaying captions:", captions);  // Debugging
+            captionsContainer.innerHTML = `
+                <h2>Generated Summary:</h2>
+                <div class="caption-item">
+                    <p class="caption-text">${captions}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
